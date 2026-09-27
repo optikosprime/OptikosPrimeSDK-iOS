@@ -203,7 +203,7 @@
 			mainGroup = C609C9723069BF06004F42C4;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				C609C9AD3069BF29004F42C4 /* XCLocalSwiftPackageReference ".." */,
+				C609C9AD3069BF29004F42C4 /* XCRemoteSwiftPackageReference "OptikosPrimeSDK-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C609C97C3069BF06004F42C4 /* Products */;
@@ -577,17 +577,21 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		C609C9AD3069BF29004F42C4 /* XCLocalSwiftPackageReference ".." */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ..;
+/* Begin XCRemoteSwiftPackageReference section */
+		C609C9AD3069BF29004F42C4 /* XCRemoteSwiftPackageReference "OptikosPrimeSDK-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/optikosprime/OptikosPrimeSDK-iOS";
+			requirement = {
+				kind = exactVersion;
+				version = 0.0.2;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		C609C9AE3069BF29004F42C4 /* OptikosPrimeSDK */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C609C9AD3069BF29004F42C4 /* XCLocalSwiftPackageReference ".." */;
+			package = C609C9AD3069BF29004F42C4 /* XCRemoteSwiftPackageReference "OptikosPrimeSDK-iOS" */;
 			productName = OptikosPrimeSDK;
 		};
 /* End XCSwiftPackageProductDependency section */

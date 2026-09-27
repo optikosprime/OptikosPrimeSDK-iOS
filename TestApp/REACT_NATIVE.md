@@ -8,7 +8,7 @@ The native SDK calls are demonstrated in [ObjCSDKExample.m](TestApp/ObjCSDKExamp
 
 1. Open your React Native app's iOS `.xcworkspace` in Xcode.
 2. Add `https://github.com/optikosprime/OptikosPrimeSDK-iOS` under **File → Add Package Dependencies** and select the `OptikosPrimeSDK` library for your application target.
-3. Choose a released SDK package version whose manifest uses **MediaPipeRuntime from MediaPipe 1.0.1 or later**. The original SDK package tag `0.0.1` lacks that dependency wiring. Until an updated SDK package tag is published, use a checkout containing the corrected manifest as a local package.
+3. Select SDK package **0.0.2**, the version verified by TestApp. It uses **MediaPipeRuntime from MediaPipe 1.0.1 or later** and reuses the SDK binary from 0.0.1. Do not select SDK package tag `0.0.1`, which lacks the required dependency wiring.
 4. Set the app's deployment target to **iOS 16.6 or later**, or your React Native version's minimum if higher. Reconcile this with your Podfile's deployment target.
 5. Compile your app-owned native adapter in the application target that links the SDK. A separately packaged native module needs its own dependency integration; adding a package to the app does not automatically expose its headers to every CocoaPods target.
 

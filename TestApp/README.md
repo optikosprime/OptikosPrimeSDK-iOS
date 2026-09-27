@@ -6,11 +6,11 @@ Open `TestApp.xcodeproj`, select your signing team if needed, and run on an iPho
 
 The app uses `com.optikosprime.SDKUIKitExample` and the supplied production `SDKLicenseKey` in `TestApp/Info.plist`. Installing it replaces the internal example if that app is already installed with the same identifier.
 
-The Xcode project references the package in the parent directory. That package downloads the published **0.0.1 XCFramework** and verifies its checksum; no SDK source project is used. The local package fixes the original manifest's missing MediaPipe product dependency, which otherwise leaves `MediaPipeCommonGraphLibraries.framework` out of the app and prevents launch. iOS 16.6 is required by that framework.
+The Xcode project references the published **OptikosPrimeSDK package 0.0.2** from GitHub. Its manifest downloads the **0.0.1 XCFramework** and verifies its checksum; the package update fixes dependency wiring and reuses the existing SDK binary. No local SDK package or SDK source project is used. iOS 16.6 is required by the MediaPipe runtime framework.
 
 The package depends on the `MediaPipeRuntime` product from MediaPipe 1.0.1 or later. This includes only `MediaPipeCommonGraphLibraries`; the SDK binary already contains the measurement code. The existing `SwiftTasksVision` product keeps its required unsafe linker flags, but those targets are outside the runtime product's dependency graph.
 
-MediaPipe `1.0.1` is published and includes `MediaPipeRuntime`. TestApp resolves it from GitHub using the parent SDK package manifest. The updated SDK package manifest still needs its own release; the existing remote SDK 0.0.1 release has not been changed.
+MediaPipe `1.0.1` and SDK package `0.0.2` are published. `Package.resolved` records the exact revisions used by TestApp. The recreated 0.0.2 tag points to commit `55f9bdca8d698ff7fcc1b1c4b17efc42aa1a240a`. Machines that resolved the superseded tag may report a revision/fingerprint mismatch. After verifying that replacement commit, refresh only the stored fingerprint for this package/version and resolve again; clearing build artifacts alone does not address the mismatch.
 
 The simulator smoke test checks launch, production license initialization, presentation of instructions, and cancellation. Camera measurement and server results must be tested on a physical iPhone.
 
