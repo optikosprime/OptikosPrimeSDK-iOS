@@ -2,13 +2,13 @@
 
 This guide describes how to wrap the Optikos Prime binary SDK in your application's native module. **This repository does not provide a React Native package or a tested React Native bridge.** The snippets below illustrate the integration contract; module registration and lifecycle handling belong in your app.
 
-The native SDK calls are demonstrated in [ObjCSDKExample.m](TestApp/ObjCSDKExample.m). Swift and Objective-C simulator tests verify initialization, instructions, and cancellation. Complete camera measurement requires a physical iPhone.
+The native SDK calls are demonstrated in [ObjCSDKExample.m](TestApp/ObjCSDKExample.m). Swift and Objective-C simulator tests verify initialization, instructions, cancellation, cached camera-info reuse, and unsupported-device handling using controlled camera-info responses. Complete camera measurement requires a physical iPhone.
 
 ## 1. Add the SDK to your iOS app
 
 1. Open your React Native app's iOS `.xcworkspace` in Xcode.
 2. Add `https://github.com/optikosprime/OptikosPrimeSDK-iOS` under **File → Add Package Dependencies** and select the `OptikosPrimeSDK` library for your application target.
-3. Select SDK package **0.0.2**, the version verified by TestApp. It uses **MediaPipeRuntime from MediaPipe 1.0.1 or later** and reuses the SDK binary from 0.0.1. Do not select SDK package tag `0.0.1`, which lacks the required dependency wiring.
+3. Select SDK package **0.0.3**, the version verified by TestApp. It uses **MediaPipeRuntime from MediaPipe 1.0.1 or later** and includes the 0.0.3 SDK binary. Do not select SDK package tag `0.0.1`, which lacks the required dependency wiring.
 4. Set the app's deployment target to **iOS 16.6 or later**, or your React Native version's minimum if higher. Reconcile this with your Podfile's deployment target.
 5. Compile your app-owned native adapter in the application target that links the SDK. A separately packaged native module needs its own dependency integration; adding a package to the app does not automatically expose its headers to every CocoaPods target.
 
@@ -82,7 +82,7 @@ if (!initialized) {
 UIViewController *controller = [OptikosPrimeSDK
     visionCheckViewControllerWithIsOlderThan43:isOlderThan43
     error:&error
-    completion:^(NSData *resultJSON, NSString *failure) {
+    completion:^(OptikosPrimeOutcome *outcome) {
         // Dismiss the SDK, then settle the promise using the mapping below.
     }];
 if (controller == nil) {
@@ -103,15 +103,20 @@ Implement these lifecycle rules in the adapter:
 
 ### Completion mapping
 
-| SDK callback | Adapter behavior |
+| SDK outcome | Adapter behavior |
 |---|---|
-| `failure` equals `@"cancelled"` | Resolve `{status: 'cancelled'}`. |
-| Other non-null `failure` | Reject with an app-defined error code and the message. |
-| Non-null `resultJSON`, no failure | Decode with `NSJSONSerialization`, verify a dictionary, and resolve `{status: 'completed', result: dictionary}`. |
-| Missing result or invalid JSON | Reject with an app-defined invalid-result error. |
+| `OptikosPrimeStatusCancelled` | Resolve `{status: 'cancelled'}`. |
+| `OptikosPrimeStatusFailed` | Reject with the SDK NSError domain, numeric code, and message. |
+| `OptikosPrimeStatusCompleted` | Read the typed `outcome.result` and resolve `{status: 'completed', result: ...}`. |
 | Initialization/controller creation returns an error | Reject immediately; no flow was presented. |
 
-Error codes such as `E_BUSY`, `E_LICENSE`, and `E_RESULT` would be adapter conventions, not SDK-defined React Native codes. Forward structured JSON; do not parse the display strings returned by TestApp's `ObjCSDKExample` helper. A completed result may have an `inconclusive` conclusion and is still a completed SDK operation.
+The SDK error domain is `[OptikosPrimeSDK errorDomain]` (`com.optikosprime.sdk`). Unsupported devices return `OptikosPrimeErrorCodeDeviceNotSupported` (1003). Preserve the domain and code so JavaScript can distinguish failures without parsing messages. Adapter-only errors such as `E_BUSY` remain your own conventions.
+
+You can map the result properties directly, or call `[outcome.result jsonDataAndReturnError:&error]` and decode that data with `NSJSONSerialization`. Handle export/decoding errors before settling the promise. Do not parse the display strings returned by TestApp's `ObjCSDKExample` helper. An `inconclusive` measurement is still a completed SDK operation.
+
+### Optional camera-support check
+
+After initialization, `[OptikosPrimeSDK getCameraInfoWithCompletion:]` returns `OptikosPrimeCameraInfo` or `NSError`. Use `info.supported` to control whether JavaScript offers a test. This call is optional: the full flow checks automatically before instructions or capture. Both use a one-hour cache under `optikosPrimeCameraInfo`; expired data requires a successful download. Unsupported camera info is a valid response with `supported == NO`, whereas starting a test on that device produces a failed outcome.
 
 ## 5. Call your adapter from JavaScript
 
@@ -139,4 +144,4 @@ Disable the start action while its promise is pending. For a shared Android/iOS 
 
 Check successful initialization, invalid licensing, cancellation, repeated taps, and reopening after dismissal. On an iPhone, also verify camera permission granted/denied, measurement and network failures, result delivery, and the questionnaire. Simulator smoke tests do not validate the camera or a complete server-backed measurement.
 
-The Objective-C API in SDK binary `0.0.1` uses default styling and flow options. Custom Swift configuration/style structs are not exposed through that Objective-C API; use an app-owned Swift adapter if you need those options.
+The Objective-C API in SDK binary `0.0.3` uses default styling and flow options. Custom Swift configuration/style structs are not exposed through that Objective-C API; use an app-owned Swift adapter if you need those options.

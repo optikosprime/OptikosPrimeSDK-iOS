@@ -25,7 +25,10 @@ final class ViewController: UIViewController {
 
         languageSelector.selectedSegmentIndex = 0
         languageSelector.accessibilityLabel = "SDK integration language"
-        let stack = UIStackView(arrangedSubviews: [languageSelector, button, outputLabel])
+        let supportButton = UIButton(type: .system)
+        supportButton.setTitle("Check camera support", for: .normal)
+        supportButton.addTarget(self, action: #selector(checkCameraSupport), for: .touchUpInside)
+        let stack = UIStackView(arrangedSubviews: [languageSelector, supportButton, button, outputLabel])
         stack.axis = .vertical
         stack.spacing = 24
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -35,6 +38,28 @@ final class ViewController: UIViewController {
             stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 24),
             stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24)
         ])
+    }
+
+    @objc private func checkCameraSupport() {
+        guard let licenseKey = Bundle.main.object(forInfoDictionaryKey: "SDKLicenseKey") as? String else { return }
+        outputLabel.text = "Checking camera support…"
+        if languageSelector.selectedSegmentIndex == 1 {
+            ObjCSDKExample.checkCameraSupport(licenseKey: licenseKey) { [weak self] status in
+                self?.outputLabel.text = status
+            }
+            return
+        }
+        Task { @MainActor in
+            do {
+                if !OptikosPrimeSDK.isInitialized {
+                    try OptikosPrimeSDK.initialize(licenseKey: licenseKey, environment: .production)
+                }
+                let info = try await OptikosPrimeSDK.getCameraInfo()
+                outputLabel.text = info.supported ? "Camera is supported." : "This device is not supported."
+            } catch {
+                outputLabel.text = error.localizedDescription
+            }
+        }
     }
 
     @objc private func startFullFlow() {
@@ -53,19 +78,29 @@ final class ViewController: UIViewController {
         }
 
         do {
-            try OptikosPrimeSDK.initialize(licenseKey: licenseKey, environment: .production)
+            if !OptikosPrimeSDK.isInitialized {
+                try OptikosPrimeSDK.initialize(licenseKey: licenseKey, environment: .production)
+            }
             // Matches the internal example's complete customized flow, including the questionnaire.
             let configuration = OptikosPrimeConfiguration(style: ExampleTheme.customizedStyle, isOlderThan43: true)
             let controller = try OptikosPrimeSDKBridge.visionCheckViewController(configuration: configuration) { [weak self] completion in
                 guard let self else { return }
                 self.dismiss(animated: true)
-                switch completion {
-                case .completed(let result):
-                    self.outputLabel.text = "Completed: \(result.conclusion.rawValue), measurement \(result.measurementID)"
+                switch completion.status {
+                case .completed:
+                    if let result = completion.result {
+                        self.outputLabel.text = "Completed: \(result.conclusion.stringValue), measurement \(result.measurementID)"
+                    }
                 case .cancelled:
                     self.outputLabel.text = "The test was cancelled."
-                case .failed(let error):
-                    self.outputLabel.text = "The test failed: \(error)"
+                case .failed:
+                    if let error = completion.error,
+                       error.domain == OptikosPrimeSDKBridge.errorDomain,
+                       error.code == OptikosPrimeErrorCode.deviceNotSupported.rawValue {
+                        self.outputLabel.text = "This device is not supported."
+                    } else {
+                        self.outputLabel.text = completion.error?.localizedDescription
+                    }
                 @unknown default:
                     self.outputLabel.text = "The test returned an unknown status."
                 }

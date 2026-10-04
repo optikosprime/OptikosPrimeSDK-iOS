@@ -12,7 +12,7 @@
     }
 
     NSError *error = nil;
-    if (![OptikosPrimeSDK initializeWithLicenseKey:licenseKey
+    if (![OptikosPrimeSDK isInitialized] && ![OptikosPrimeSDK initializeWithLicenseKey:licenseKey
                                       environment:OptikosPrimeEnvironmentProduction
                                             error:&error]) {
         completion(error.localizedDescription ?: @"SDK initialization failed.");
@@ -23,18 +23,23 @@
     UIViewController *controller = [OptikosPrimeSDK
         visionCheckViewControllerWithIsOlderThan43:YES
         error:&error
-        completion:^(NSData *resultJSON, NSString *failure) {
+        completion:^(OptikosPrimeOutcome *outcome) {
             [weakPresenter dismissViewControllerAnimated:YES completion:nil];
-            if ([failure isEqualToString:@"cancelled"]) {
-                completion(@"The test was cancelled.");
-            } else if (failure != nil) {
-                completion([@"The test failed: " stringByAppendingString:failure]);
-            } else if (resultJSON != nil) {
-                // Objective-C receives the completed result as JSON data.
-                NSString *json = [[NSString alloc] initWithData:resultJSON encoding:NSUTF8StringEncoding];
-                completion([@"Completed: " stringByAppendingString:json ?: @"No readable result."]);
-            } else {
-                completion(@"The test returned no result.");
+            switch (outcome.status) {
+                case OptikosPrimeStatusCompleted:
+                    completion([NSString stringWithFormat:@"Completed measurement: %@", outcome.result.measurementID]);
+                    break;
+                case OptikosPrimeStatusCancelled:
+                    completion(@"The test was cancelled.");
+                    break;
+                case OptikosPrimeStatusFailed:
+                    if ([outcome.error.domain isEqualToString:[OptikosPrimeSDK errorDomain]] &&
+                        outcome.error.code == OptikosPrimeErrorCodeDeviceNotSupported) {
+                        completion(@"This device is not supported.");
+                    } else {
+                        completion(outcome.error.localizedDescription);
+                    }
+                    break;
             }
         }];
 
@@ -44,6 +49,19 @@
     }
     controller.modalPresentationStyle = UIModalPresentationFullScreen;
     [presenter presentViewController:controller animated:YES completion:nil];
+}
+
++ (void)checkCameraSupportWithLicenseKey:(NSString *)licenseKey completion:(void (^)(NSString *))completion {
+    NSError *error = nil;
+    if (![OptikosPrimeSDK isInitialized] &&
+        ![OptikosPrimeSDK initializeWithLicenseKey:licenseKey environment:OptikosPrimeEnvironmentProduction error:&error]) {
+        completion(error.localizedDescription);
+        return;
+    }
+    [OptikosPrimeSDK getCameraInfoWithCompletion:^(OptikosPrimeCameraInfo *info, NSError *error) {
+        completion(error != nil ? error.localizedDescription :
+                   (info.supported ? @"Camera is supported." : @"This device is not supported."));
+    }];
 }
 
 @end

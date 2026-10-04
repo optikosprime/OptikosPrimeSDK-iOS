@@ -8,6 +8,9 @@ NS_ASSUME_NONNULL_BEGIN
                     licenseKey:(NSString *)licenseKey
                     completion:(void (^)(NSString *status))completion
     NS_SWIFT_NAME(start(from:licenseKey:completion:));
++ (void)checkCameraSupportWithLicenseKey:(NSString *)licenseKey
+                             completion:(void (^)(NSString *status))completion
+    NS_SWIFT_NAME(checkCameraSupport(licenseKey:completion:));
 @end
 
 NS_ASSUME_NONNULL_END

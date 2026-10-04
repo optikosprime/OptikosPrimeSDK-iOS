@@ -15,7 +15,7 @@ In Xcode, choose **File → Add Package Dependencies**, enter:
 https://github.com/optikosprime/OptikosPrimeSDK-iOS
 ```
 
-Select the `OptikosPrimeSDK` library for your application target and use the SDK release associated with this README.
+Select the `OptikosPrimeSDK` library for your application target. This README documents **SDK 0.0.3**, the version used by TestApp.
 
 The package includes the `MediaPipeRuntime` dependency. Ensure `MediaPipeCommonGraphLibraries.framework` is embedded and signed in the host app. The SDK bundles its face-landmark model; your app does not need to supply one.
 
@@ -256,6 +256,6 @@ Prefer the complete-flow entry point for a guided test with a terminal outcome. 
 
 ## Example app and React Native
 
-See [TestApp](TestApp/README.md) for the sample application with Swift and Objective-C integrations. Its package dependency and examples will be updated after this SDK release is published.
+See [TestApp](TestApp/README.md) for the sample application with Swift and Objective-C integrations. It uses published SDK 0.0.3 and demonstrates the typed completion and optional camera-info APIs in both languages.
 
-This repository does not provide a React Native package or complete bridge. A native adapter should translate the typed outcome into JavaScript values, using optional JSON export if convenient. The [React Native integration guide](TestApp/REACT_NATIVE.md) currently describes the previous callback interface and will be updated alongside TestApp; use the typed contract above for this SDK version.
+This repository does not provide a React Native package or complete bridge. A native adapter should translate the typed outcome into JavaScript values, using optional JSON export if convenient. The [React Native integration guide](TestApp/REACT_NATIVE.md) describes the native adapter contract for SDK 0.0.3.

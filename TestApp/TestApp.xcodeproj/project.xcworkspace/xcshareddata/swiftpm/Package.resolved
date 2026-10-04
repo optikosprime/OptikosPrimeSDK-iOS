@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/optikosprime/OptikosPrimeSDK-iOS",
       "state" : {
-        "revision" : "55f9bdca8d698ff7fcc1b1c4b17efc42aa1a240a",
-        "version" : "0.0.2"
+        "revision" : "05fa8fdb2830f5426173b45bed81258597ad15ef",
+        "version" : "0.0.3"
       }
     }
   ],
