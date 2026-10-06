@@ -2,17 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>135.181.26.96</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-			</dict>
-		</dict>
-	</dict>
 	<key>SDKLicenseKey</key>
 	<string>eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLm9wdGlrb3NwcmltZS5jb20vc2RrIiwiYXVkIjoiaHR0cHM6Ly9jbG91ZC5vcHRpa29zcHJpbWUuY29tL3NkayIsInN1YiI6IjVlZDVlMDg2LTZiM2UtNDVmYy1iZTZmLTU3MWJhZDMxYzY0MSIsImlhdCI6MTc5MDI3MjY2MCwiYnVuZGxlX2lkIjoiY29tLm9wdGlrb3NwcmltZS5TREtVSUtpdEV4YW1wbGUiLCJsaWNlbnNlX2dlbmVyYXRpb24iOjF9.m5VgNr27GketUHXWPs3Tcu4BnFdQk3TKu_s80Osvadu3ekjThdcetJhyaHnPaVVvXHQwzxzcIGUE0EMGjiE6nUw932KhwZgCNXJUt8dY_hXJb2WvlaS_JEsQC6kjVbK5Hog6VcJFCdV7OjXq5T03hELYLrzn-3ploAdB32kk43nC0kp0RZC_I1THBs0Esr-kdd10ag5QHtJ5o3attKkLSCclOnq_fsbSl6_HHqA0In80tC5DbZs9EP15BD52YxAZ5EHsIz3KKMl5w4RDealGOFwNaO0-Yad5An1XLyQsqed5DC3WPJ8LuhH8LKCubYFZU_igrqKxMXqETzdTaYx74EHyUQ_MLKTW2IWhY3uNjYOsH_AVGxLFRmNne3mZbRGN0w0UYKcy1zDiBhJeIjFSwDmaMhqwvjHYq5E1yg09WN8qGinYOMRhMgoN6hxohkhBnjIXiKMw9XSvnoK11O1qCEHvb96YcLKK2EFTnrmr541HIBJCmTOVWohYSDamrsli</string>
 	<key>UIApplicationSceneManifest</key>

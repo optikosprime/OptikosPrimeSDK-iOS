@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "mediapipeswiftpackage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jurajantas/MediapipeSwiftPackage",
+      "state" : {
+        "revision" : "f80b9a593a1ea03b7df8a70e34841d5b82c4d971",
+        "version" : "1.0.1"
+      }
+    }
+  ],
+  "version" : 2
+}

@@ -1,6 +1,27 @@
 #import "ObjCSDKExample.h"
 #import <OptikosPrimeSDK/OptikosPrimeSDK-Swift.h>
 
+static NSString *ConclusionName(OptikosPrimeConclusion conclusion) {
+    switch (conclusion) {
+        case OptikosPrimeConclusionNormal: return @"normal";
+        case OptikosPrimeConclusionFinding: return @"finding";
+        case OptikosPrimeConclusionInconclusive: return @"inconclusive";
+    }
+    return @"unknown";
+}
+
+static NSString *QuestionnaireName(OptikosPrimeQuestionResult assessment) {
+    switch (assessment) {
+        case OptikosPrimeQuestionResultNotAnswered: return @"notAnswered";
+        case OptikosPrimeQuestionResultNormal: return @"normal";
+        case OptikosPrimeQuestionResultMyopia: return @"myopia";
+        case OptikosPrimeQuestionResultHyperopia: return @"hyperopia";
+        case OptikosPrimeQuestionResultAstigmatism: return @"astigmatism";
+        case OptikosPrimeQuestionResultPresbyopia: return @"presbyopia";
+    }
+    return @"unknown";
+}
+
 @implementation ObjCSDKExample
 
 + (void)startFromViewController:(UIViewController *)presenter
@@ -26,9 +47,16 @@
         completion:^(OptikosPrimeOutcome *outcome) {
             [weakPresenter dismissViewControllerAnimated:YES completion:nil];
             switch (outcome.status) {
-                case OptikosPrimeStatusCompleted:
-                    completion([NSString stringWithFormat:@"Completed measurement: %@", outcome.result.measurementID]);
+                case OptikosPrimeStatusCompleted: {
+                    OptikosPrimeResult *result = outcome.result;
+                    NSString *assessment = result.questionnaire == OptikosPrimeQuestionResultNotAnswered
+                        ? @"Camera assessment"
+                        : [NSString stringWithFormat:@"Questionnaire assessment: %@",
+                           QuestionnaireName(result.questionnaire)];
+                    completion([NSString stringWithFormat:@"Completed: %@\n%@\nMeasurement: %@",
+                                ConclusionName(result.conclusion), assessment, result.measurementID]);
                     break;
+                }
                 case OptikosPrimeStatusCancelled:
                     completion(@"The test was cancelled.");
                     break;

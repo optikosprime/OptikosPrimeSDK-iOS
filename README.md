@@ -15,7 +15,7 @@ In Xcode, choose **File → Add Package Dependencies**, enter:
 https://github.com/optikosprime/OptikosPrimeSDK-iOS
 ```
 
-Select the `OptikosPrimeSDK` library for your application target. This README documents **SDK 0.0.3**, the version used by TestApp.
+Select the `OptikosPrimeSDK` library for your application target. This README documents **SDK 0.0.4**, the version used by TestApp.
 
 The package includes the `MediaPipeRuntime` dependency. Ensure `MediaPipeCommonGraphLibraries.framework` is embedded and signed in the host app. The SDK bundles its face-landmark model; your app does not need to supply one.
 
@@ -32,7 +32,7 @@ The SDK requests camera access when opening its camera. It uses video capture wi
 
 The camera also uses live `CMMotionManager` accelerometer and device-motion updates for orientation guidance. Whether these specific APIs require `NSMotionUsageDescription` remains unconfirmed in this integration; the existing VisionCheck app does not declare it. A fresh-install device check should include motion guidance as well as camera access and denial.
 
-Production uses the HTTPS service at `cloud.optikosprime.com`. The development environment has separate server configuration; the TestApp’s ATS settings are not a user permission and should not be copied blindly into a production app.
+Production uses the HTTPS service at `cloud.optikosprime.com`. The public TestApp uses production and has no ATS exceptions. Development uses `https://dev.cloud.optikosprime.com/` and requires a development license. Both environments use normal TLS certificate and hostname validation.
 
 ## Main entry point
 
@@ -199,6 +199,7 @@ SDK errors use domain `com.optikosprime.sdk`, available as `OptikosPrimeSDKBridg
 | 1006 | `invalidResult` |
 | 1007 | `sessionChanged` |
 | 1008 | `testFailed` |
+| 1009 | `questionnaireUploadCancelled` |
 
 ## Optional camera-info check
 
@@ -256,6 +257,17 @@ Prefer the complete-flow entry point for a guided test with a terminal outcome. 
 
 ## Example app and React Native
 
-See [TestApp](TestApp/README.md) for the sample application with Swift and Objective-C integrations. It uses published SDK 0.0.3 and demonstrates the typed completion and optional camera-info APIs in both languages.
+See [TestApp](TestApp/README.md) for the sample application. Select **Swift** or **Objective-C**, then use **Start full vision check** to present the complete SDK flow, with `isOlderThan43: true`. **Check camera support** demonstrates the optional camera-info API in the selected language; the full flow also checks support automatically. The host displays the final conclusion, questionnaire assessment when available, and measurement identifier after completion. The app calls the SDK directly without network fixtures or simulator device-model overrides. The Objective-C integration is implemented in `TestApp/ObjCSDKExample.m`. The app uses SDK 0.0.4.
 
-This repository does not provide a React Native package or complete bridge. A native adapter should translate the typed outcome into JavaScript values, using optional JSON export if convenient. The [React Native integration guide](TestApp/REACT_NATIVE.md) describes the native adapter contract for SDK 0.0.3.
+This repository does not provide a React Native package or complete bridge. A native adapter should translate the typed outcome into JavaScript values, using optional JSON export if convenient. The [React Native integration guide](TestApp/REACT_NATIVE.md) describes the native adapter contract for SDK 0.0.4.
+
+
+## Measurement sessions and questionnaire results
+
+The SDK creates a measurement session before instructions and capture. Its UUID is reused for prediction uploads and questionnaire submission. The camera-support loading screen uses the configured SDK colors and typography.
+
+All four questionnaire answers are required and saved before completing the questionnaire. Failed submissions can be retried; cancelling an unsaved questionnaire reports `questionnaireUploadCancelled` (error code 1009).
+
+After successful submission, the answers and `isOlderThan43` determine the final assessment using VisionCheck’s four-question rules. A normal assessment produces `conclusion == .normal`; myopia, hyperopia, astigmatism, or presbyopia produces `.finding`. `questionnaire` identifies the assessment, while `leftEye` and `rightEye` retain the original camera probabilities and ranges. The SDK result screen displays the final assessment. Without completed questions, the camera-based conclusion remains.
+
+Verify the complete measurement and questionnaire flow on a supported physical iPhone; simulator tests cover app launch and public result/error contracts.

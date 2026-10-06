@@ -41,7 +41,11 @@ final class ViewController: UIViewController {
     }
 
     @objc private func checkCameraSupport() {
-        guard let licenseKey = Bundle.main.object(forInfoDictionaryKey: "SDKLicenseKey") as? String else { return }
+        guard let licenseKey = Bundle.main.object(forInfoDictionaryKey: "SDKLicenseKey") as? String,
+              !licenseKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            outputLabel.text = "Set SDKLicenseKey in Info.plist to the production license for com.optikosprime.SDKUIKitExample."
+            return
+        }
         outputLabel.text = "Checking camera support…"
         if languageSelector.selectedSegmentIndex == 1 {
             ObjCSDKExample.checkCameraSupport(licenseKey: licenseKey) { [weak self] status in
@@ -89,7 +93,9 @@ final class ViewController: UIViewController {
                 switch completion.status {
                 case .completed:
                     if let result = completion.result {
-                        self.outputLabel.text = "Completed: \(result.conclusion.stringValue), measurement \(result.measurementID)"
+                        let assessment = result.questionnaire == .notAnswered
+                            ? "Camera assessment" : "Questionnaire assessment: \(result.questionnaire.stringValue)"
+                        self.outputLabel.text = "Completed: \(result.conclusion.stringValue)\n\(assessment)\nMeasurement: \(result.measurementID)"
                     }
                 case .cancelled:
                     self.outputLabel.text = "The test was cancelled."
