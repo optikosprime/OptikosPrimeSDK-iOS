@@ -583,7 +583,7 @@
 			repositoryURL = "https://github.com/optikosprime/OptikosPrimeSDK-iOS";
 			requirement = {
 				kind = exactVersion;
-				version = 0.0.4;
+				version = 0.0.5;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
