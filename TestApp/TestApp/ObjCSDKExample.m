@@ -1,13 +1,12 @@
 #import "ObjCSDKExample.h"
 #import <OptikosPrimeSDK/OptikosPrimeSDK-Swift.h>
 
-static NSString *ConclusionName(OptikosPrimeConclusion conclusion) {
-    switch (conclusion) {
-        case OptikosPrimeConclusionNormal: return @"normal";
-        case OptikosPrimeConclusionFinding: return @"finding";
-        case OptikosPrimeConclusionInconclusive: return @"inconclusive";
+static NSString *AssessmentNames(NSArray<OptikosPrimeAssessment *> *assessments) {
+    NSMutableArray<NSString *> *titles = [NSMutableArray array];
+    for (OptikosPrimeAssessment *assessment in assessments) {
+        [titles addObject:assessment.title];
     }
-    return @"unknown";
+    return [titles componentsJoinedByString:@", "];
 }
 
 static NSString *QuestionnaireName(OptikosPrimeQuestionResult assessment) {
@@ -54,7 +53,7 @@ static NSString *QuestionnaireName(OptikosPrimeQuestionResult assessment) {
                         : [NSString stringWithFormat:@"Questionnaire assessment: %@",
                            QuestionnaireName(result.questionnaire)];
                     completion([NSString stringWithFormat:@"Completed: %@\n%@\nMeasurement: %@",
-                                ConclusionName(result.conclusion), assessment, result.measurementID]);
+                                AssessmentNames(result.results), assessment, result.measurementID]);
                     break;
                 }
                 case OptikosPrimeStatusCancelled:

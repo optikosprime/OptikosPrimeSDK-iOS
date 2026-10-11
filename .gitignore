@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+._*
+
+# Swift Package Manager build output and generated Xcode workspace
+.build/
+.swiftpm/xcode/package.xcworkspace/
+
+# Xcode build output and local user settings
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Local archives, exported apps, debug symbols, and test results
+*.xcarchive/
+*.ipa
+*.dSYM/
+*.dSYM.zip
+*.xcresult/
+
+# Keep Package.resolved, shared schemes, and shared project settings tracked.

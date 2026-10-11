@@ -6,13 +6,13 @@ Open `TestApp.xcodeproj`, select your signing team if needed, and run on an iPho
 
 The app uses `com.optikosprime.SDKUIKitExample` and the supplied production `SDKLicenseKey` in `TestApp/Info.plist`. Installing it replaces the internal example if that app is already installed with the same identifier.
 
-The Xcode project references published **OptikosPrimeSDK package 0.0.4**, which downloads the **0.0.4 XCFramework** and verifies its checksum. It does not use a local SDK source project.
+The Xcode project references the binary OptikosPrimeSDK package, which downloads its versioned XCFramework and verifies its checksum. It does not use a local SDK source project.
 
-The package depends on `MediaPipeRuntime` 1.0.1 or later, providing `MediaPipeCommonGraphLibraries`. iOS 16.6 or later is required. Do not add the full `SwiftTasksVision` product; the SDK binary already contains the measurement code.
+Requires iOS 16.6 or later. Required dependencies are included automatically through Swift Package Manager.
 
 Tap **Check camera support** to demonstrate the optional `getCameraInfo` API in the selected language. It uses the real service and the SDK’s camera-info cache. **Start full vision check** presents the complete flow. The SDK performs camera-support checking and session creation automatically, then owns instructions, capture, analysis, results, questionnaire, and retry. An unsupported device returns a typed failure, which the host displays after dismissing the SDK.
 
-The host handles `OptikosPrimeOutcome`: completed outcomes contain a typed result, cancellation has no payload, and failures contain an `NSError` with stable domain and code. After completion, the host displays the final conclusion, questionnaire assessment (if answered), and measurement identifier. See the [SDK README](../README.md) for the full contract.
+The host handles `OptikosPrimeOutcome`: completed outcomes contain a typed result, cancellation has no payload, and failures contain an `NSError` with stable domain and code. After completion, both the Swift and Objective-C examples display the aggregated assessment names from `result.results`, the questionnaire assessment when available, and the measurement identifier. See the [SDK README](../README.md) for the full contract.
 
 The sample calls the SDK directly, without network interception, synthetic responses, or simulator device-model overrides. The UI test checks the app’s launch screen; unit tests check the public result and error contracts. Run the full flow on a supported physical iPhone with a network connection to validate camera support, session creation, capture, and questionnaire submission.
 
@@ -20,8 +20,8 @@ The **Objective-C** selection calls `TestApp/ObjCSDKExample.m` to initialize and
 
 ## Questionnaire results
 
-Successfully saved questionnaire answers and the configured age group determine the final assessment using VisionCheck’s four-question rules. A normal questionnaire sets the final conclusion to `normal`; myopia, hyperopia, astigmatism, or presbyopia sets it to `finding`, even when the camera was inconclusive. The original camera probabilities remain available in `leftEye` and `rightEye`. Without completed questions, the camera conclusion is retained.
+Successfully saved questionnaire answers and the configured age group determine the final assessment using VisionCheck’s four-question rules. The evaluated assessment is applied to both eyes and the aggregate, even when the camera was inconclusive. Read `left`, `right`, and `results` for the specific assessments, rather than the deprecated coarse `conclusion`. The original camera probabilities remain available in `leftEye` and `rightEye`. Without completed questions, each eye is classified from its camera probabilities.
 
 Both API environments use normal TLS validation; the test app has no ATS exception. This public example continues to use production and its supplied production license.
 
-On an iPhone, start the full flow: complete a measurement, answer all four questions, wait for successful submission, and check that the SDK screen and host completion summary show the same final assessment. Also verify cancelling, skipping questions, and retrying a failed questionnaire submission. Full camera measurements cannot be validated in the simulator.
+On an iPhone, start the full flow: complete a measurement, answer all four questions, wait for successful submission, and check that the SDK screen shows the returned per-eye and aggregated assessments. Also verify cancelling, skipping questions, and retrying a failed questionnaire submission. Full camera measurements cannot be validated in the simulator.

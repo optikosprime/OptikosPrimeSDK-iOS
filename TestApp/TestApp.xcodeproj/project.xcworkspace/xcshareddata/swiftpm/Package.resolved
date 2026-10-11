@@ -1,0 +1,24 @@
+{
+  "originHash" : "43ee2a78b2fdf5e1e5f97406eaba019c9b1d4ff6d2ae74e8ef6bfda01f8dd6a9",
+  "pins" : [
+    {
+      "identity" : "mediapipeswiftpackage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jurajantas/MediapipeSwiftPackage",
+      "state" : {
+        "revision" : "f80b9a593a1ea03b7df8a70e34841d5b82c4d971",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "optikosprimesdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/optikosprime/OptikosPrimeSDK-iOS",
+      "state" : {
+        "revision" : "c38c02041240a36f1beff3d487a30a1c5e4e1b64",
+        "version" : "0.0.4"
+      }
+    }
+  ],
+  "version" : 3
+}

@@ -95,7 +95,8 @@ final class ViewController: UIViewController {
                     if let result = completion.result {
                         let assessment = result.questionnaire == .notAnswered
                             ? "Camera assessment" : "Questionnaire assessment: \(result.questionnaire.stringValue)"
-                        self.outputLabel.text = "Completed: \(result.conclusion.stringValue)\n\(assessment)\nMeasurement: \(result.measurementID)"
+                        let results = result.results.map { $0.title }.joined(separator: ", ")
+                        self.outputLabel.text = "Completed: \(results)\n\(assessment)\nMeasurement: \(result.measurementID)"
                     }
                 case .cancelled:
                     self.outputLabel.text = "The test was cancelled."

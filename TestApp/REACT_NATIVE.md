@@ -8,7 +8,7 @@ The native SDK calls are demonstrated in [ObjCSDKExample.m](TestApp/ObjCSDKExamp
 
 1. Open your React Native app's iOS `.xcworkspace` in Xcode.
 2. Add `https://github.com/optikosprime/OptikosPrimeSDK-iOS` under **File → Add Package Dependencies** and select the `OptikosPrimeSDK` library for your application target.
-3. Select SDK package **0.0.4**, the version verified by TestApp. It uses **MediaPipeRuntime from MediaPipe 1.0.1 or later** and includes the 0.0.4 SDK binary. Do not select SDK package tag `0.0.1`, which lacks the required dependency wiring.
+3. Select the binary SDK package version used by your host app. It uses **MediaPipeRuntime from MediaPipe 1.0.1 or later**. Do not select SDK package tag `0.0.1`, which lacks the required dependency wiring.
 4. Set the app's deployment target to **iOS 16.6 or later**, or your React Native version's minimum if higher. Reconcile this with your Podfile's deployment target.
 5. Compile your app-owned native adapter in the application target that links the SDK. A separately packaged native module needs its own dependency integration; adding a package to the app does not automatically expose its headers to every CocoaPods target.
 
@@ -39,12 +39,33 @@ The SDK presents its own full-screen UIKit controller, so your module can expose
 
 ```typescript
 // Illustrative app interface, not an exported SDK JavaScript API or Codegen spec.
+export type AssessmentType =
+  | 'myopia' | 'hyperopia' | 'astigmatism'
+  | 'normal' | 'presbyopia' | 'inconclusive';
+
+export interface Assessment {
+  type: AssessmentType;
+}
+
+export interface CameraEyeResult {
+  myopia: number;
+  hyperopia: number;
+  astigmatism: number;
+  inconclusive: number;
+  normal: number;
+  unmeasurableRangeMinimum?: number;
+  unmeasurableRangeMaximum?: number;
+}
+
+// Matches result.jsonData(), without native computed display properties.
 export interface VisionCheckResult {
   measurementID: string;
-  conclusion: 'finding' | 'normal' | 'inconclusive';
-  leftEye: Record<string, unknown>;
-  rightEye: Record<string, unknown>;
-  questionnaire?: string;
+  left: Assessment[];
+  right: Assessment[];
+  results: Assessment[];
+  leftEye: CameraEyeResult;
+  rightEye: CameraEyeResult;
+  questionnaire?: Exclude<AssessmentType, 'inconclusive'>;
 }
 
 export type VisionCheckOutcome =
@@ -112,7 +133,7 @@ Implement these lifecycle rules in the adapter:
 
 The SDK error domain is `[OptikosPrimeSDK errorDomain]` (`com.optikosprime.sdk`). Unsupported devices return `OptikosPrimeErrorCodeDeviceNotSupported` (1003). Preserve the domain and code so JavaScript can distinguish failures without parsing messages. Adapter-only errors such as `E_BUSY` remain your own conventions.
 
-You can map the result properties directly, or call `[outcome.result jsonDataAndReturnError:&error]` and decode that data with `NSJSONSerialization`. Handle export/decoding errors before settling the promise. Do not parse the display strings returned by TestApp's `ObjCSDKExample` helper. An `inconclusive` measurement is still a completed SDK operation.
+You can map the result properties directly, or call `[outcome.result jsonDataAndReturnError:&error]` and decode that data with `NSJSONSerialization`. Handle export/decoding errors before settling the promise. Do not parse the display strings returned by TestApp's `ObjCSDKExample` helper. A result whose aggregated `results` contains only `inconclusive` is still a completed SDK operation.
 
 ### Optional camera-support check
 
@@ -144,4 +165,11 @@ Disable the start action while its promise is pending. For a shared Android/iOS 
 
 Check successful initialization, invalid licensing, cancellation, repeated taps, and reopening after dismissal. On an iPhone, also verify camera permission granted/denied, measurement and network failures, result delivery, and the questionnaire. Simulator smoke tests do not validate the camera or a complete server-backed measurement.
 
-The Objective-C API in SDK binary `0.0.4` uses default styling and flow options. Custom Swift configuration/style structs are not exposed through that Objective-C API; use an app-owned Swift adapter if you need those options.
+The Objective-C API uses default styling and flow options. Custom Swift configuration/style structs are not exposed through that Objective-C API; use an app-owned Swift adapter if you need those options.
+
+
+## Result mapping and migration
+
+Use `result.results` for aggregate assessments and `result.left` / `result.right` for each eye. Each native assessment has `type`, `title`, and `subtitle`; JSON exports only its type. The aggregate removes duplicates and discards inconclusive or normal when a more specific assessment is available. Successfully completed questions set the final per-eye and aggregate assessments using the answers and age, while original camera probabilities remain in `leftEye` and `rightEye`.
+
+`conclusion` is deprecated and omitted from new JSON. Update JavaScript consumers from the coarse `finding` category to specific assessment arrays. Export JSON through `jsonDataAndReturnError:`, decode it with `NSJSONSerialization`, and pass that dictionary to JavaScript rather than manually translating integer enum values. `questionnaire` is absent in JSON when no questionnaire was completed; unavailable measurement-range bounds are also omitted. See the [SDK output documentation](../README.md#json-export) for a complete payload example.

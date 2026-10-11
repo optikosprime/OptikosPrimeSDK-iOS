@@ -15,7 +15,7 @@ In Xcode, choose **File → Add Package Dependencies**, enter:
 https://github.com/optikosprime/OptikosPrimeSDK-iOS
 ```
 
-Select the `OptikosPrimeSDK` library for your application target. This README documents **SDK 0.0.4**, the version used by TestApp.
+Select the `OptikosPrimeSDK` library for your application target. The SDK output contract and integration examples are documented below.
 
 The package includes the `MediaPipeRuntime` dependency. Ensure `MediaPipeCommonGraphLibraries.framework` is embedded and signed in the host app. The SDK bundles its face-landmark model; your app does not need to supply one.
 
@@ -98,7 +98,7 @@ do {
         switch outcome.status {
         case .completed:
             if let result = outcome.result {
-                print(result.measurementID, result.conclusion.stringValue)
+                print(result.measurementID, result.results.map { $0.type.stringValue })
             }
         case .cancelled:
             break
@@ -181,11 +181,99 @@ Completion delivers one immutable `OptikosPrimeOutcome` on the main thread when 
 | `cancelled` | nil | nil |
 | `failed` | nil | `NSError` |
 
-`OptikosPrimeResult` exposes `measurementID`, `leftEye`, `rightEye`, `conclusion`, and `questionnaire`. Each eye result exposes myopia, hyperopia, astigmatism, inconclusive, and normal values, plus optional unmeasurable-range bounds. Result objects are read-only and accessible from Objective-C.
+`OptikosPrimeOutcome` reports exactly one terminal status. Only `completed` contains a result; `cancelled` has no result or error; `failed` contains an `NSError` with domain `com.optikosprime.sdk`, a stable error code, and a description. A completed test may still have an inconclusive assessment.
 
-`conclusion` uses `OptikosPrimeConclusion` (`finding`, `normal`, `inconclusive`). `questionnaire` uses `OptikosPrimeQuestionResult` (`notAnswered`, `normal`, `myopia`, `hyperopia`, `astigmatism`, `presbyopia`). Optional numeric eye ranges are nullable `NSNumber` in Objective-C.
+`OptikosPrimeResult` contains:
 
-JSON export is optional: call `try result.jsonData()` in Swift or `[result jsonDataAndReturnError:&error]` in Objective-C. Serialized enum values remain strings.
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `measurementID` | `String` | Server measurement/session identifier |
+| `left` | `[OptikosPrimeAssessment]` | Final assessments for the left eye |
+| `right` | `[OptikosPrimeAssessment]` | Final assessments for the right eye |
+| `results` | `[OptikosPrimeAssessment]` | Aggregated assessments from both eyes |
+| `leftEye`, `rightEye` | `OptikosPrimeEyeResult` | Original camera probabilities and optional measurement ranges |
+| `questionnaire` | `OptikosPrimeQuestionResult` | Evaluated questionnaire assessment, or `.notAnswered` |
+| `isNormal` | `Bool` | The aggregate contains only normal |
+| `isInconclusive` | `Bool` | The aggregate is empty or contains only inconclusive |
+
+Each `OptikosPrimeAssessment` exposes `type`, `title`, and `subtitle`. Use `type` for application logic; the display strings describe that assessment. Assessment types are `myopia`, `hyperopia`, `astigmatism`, `normal`, `presbyopia`, and `inconclusive`. VisionCheck’s `readingGlasses` assessment is named `presbyopia` in the SDK. These objects and arrays are available in both Swift and Objective-C.
+
+Each original eye measurement exposes `myopia`, `hyperopia`, `astigmatism`, `inconclusive`, and `normal` as `Double` probability values, plus optional `unmeasurableRangeMinimum` and `unmeasurableRangeMaximum`. Objective-C receives nullable `NSNumber` for the optional bounds. Questionnaire evaluation does not overwrite these measurements.
+
+### Per-eye and aggregated assessments
+
+Without completed questions, each eye is classified using VisionCheck’s camera classifier: myopia or hyperopia above 0.25 takes priority; otherwise, the highest probability determines its assessment. After successful questionnaire submission, the four answers and `isOlderThan43` determine one assessment applied to both eyes.
+
+`results` is the deduplicated union of `left` and `right`. If another assessment exists, inconclusive is removed. If a specific assessment remains, normal is removed. Per-eye arrays keep their own assessments. Aggregate ordering is stable: myopia, hyperopia, astigmatism, normal, presbyopia, inconclusive.
+
+| Left | Right | Aggregate |
+| --- | --- | --- |
+| myopia | hyperopia | myopia, hyperopia |
+| normal | myopia | myopia |
+| inconclusive | normal | normal |
+| inconclusive | inconclusive | inconclusive |
+| presbyopia | presbyopia | presbyopia |
+
+### Read the result
+
+```swift
+if let result = outcome.result {
+    for assessment in result.results {
+        print(assessment.type.stringValue, assessment.title, assessment.subtitle)
+    }
+    let leftTypes = result.left.map { $0.type }
+    let rightTypes = result.right.map { $0.type }
+    let json = try result.jsonData()
+}
+```
+
+```objc
+OptikosPrimeResult *result = outcome.result;
+for (OptikosPrimeAssessment *assessment in result.results) {
+    if (assessment.type == OptikosPrimeAssessmentTypePresbyopia) {
+        // Handle the specific assessment.
+    }
+    NSLog(@"%@ — %@", assessment.title, assessment.subtitle);
+}
+NSArray<OptikosPrimeAssessment *> *left = result.left;
+NSArray<OptikosPrimeAssessment *> *right = result.right;
+```
+
+### JSON export
+
+`try result.jsonData()` exports the result, not the outcome wrapper. Objective-C uses `jsonDataAndReturnError:`. Enum names serialize as strings. Assessment objects serialize only their `type`; display titles and subtitles are derived properties. `isNormal` and `isInconclusive` are also derived and not serialized. Unavailable range bounds are omitted. `questionnaire` is omitted when it is `.notAnswered`.
+
+This example represents an inconclusive camera measurement followed by a presbyopia questionnaire assessment:
+
+```json
+{
+  "measurementID": "7094a1a0-ee08-4b7a-b2dc-71b490f61d0d",
+  "leftEye": {
+    "hyperopia": 0.0,
+    "myopia": 0.0,
+    "astigmatism": 0.0,
+    "inconclusive": 1.0,
+    "normal": 0.0
+  },
+  "rightEye": {
+    "hyperopia": 0.0,
+    "myopia": 0.0,
+    "astigmatism": 0.0,
+    "inconclusive": 1.0,
+    "normal": 0.0
+  },
+  "left": [{"type": "presbyopia"}],
+  "right": [{"type": "presbyopia"}],
+  "results": [{"type": "presbyopia"}],
+  "questionnaire": "presbyopia"
+}
+```
+
+The output does not include captured videos, individual questionnaire answers, or age. `questionnaire` contains the evaluated assessment, not the raw answers.
+
+### Migrate from the coarse conclusion
+
+Use `results` instead of switching on `conclusion == .finding`; use `left` and `right` for eye-specific assessments. `conclusion` and its initializer remain deprecated compatibility APIs. New JSON omits `conclusion`. Older result JSON can still be decoded: assessments are derived from its saved camera data and questionnaire. Rebuild native adapters against the updated SDK header and update JavaScript models to accept assessment arrays.
 
 SDK errors use domain `com.optikosprime.sdk`, available as `OptikosPrimeSDKBridge.errorDomain` in Swift and `[OptikosPrimeSDK errorDomain]` in Objective-C. Inspect the domain and code, rather than comparing error messages.
 
@@ -257,9 +345,9 @@ Prefer the complete-flow entry point for a guided test with a terminal outcome. 
 
 ## Example app and React Native
 
-See [TestApp](TestApp/README.md) for the sample application. Select **Swift** or **Objective-C**, then use **Start full vision check** to present the complete SDK flow, with `isOlderThan43: true`. **Check camera support** demonstrates the optional camera-info API in the selected language; the full flow also checks support automatically. The host displays the final conclusion, questionnaire assessment when available, and measurement identifier after completion. The app calls the SDK directly without network fixtures or simulator device-model overrides. The Objective-C integration is implemented in `TestApp/ObjCSDKExample.m`. The app uses SDK 0.0.4.
+See [TestApp](TestApp/README.md) for the sample application. Select **Swift** or **Objective-C**, then use **Start full vision check** to present the complete SDK flow, with `isOlderThan43: true`. **Check camera support** demonstrates the optional camera-info API in the selected language; the full flow also checks support automatically. The SDK displays final assessments and returns the typed result to the host. The app calls the SDK directly without network fixtures or simulator device-model overrides. The Objective-C integration is implemented in `TestApp/ObjCSDKExample.m`. The app uses the binary SDK package.
 
-This repository does not provide a React Native package or complete bridge. A native adapter should translate the typed outcome into JavaScript values, using optional JSON export if convenient. The [React Native integration guide](TestApp/REACT_NATIVE.md) describes the native adapter contract for SDK 0.0.4.
+This repository does not provide a React Native package or complete bridge. A native adapter should translate the typed outcome into JavaScript values, using optional JSON export if convenient. The [React Native integration guide](TestApp/REACT_NATIVE.md) describes the native adapter contract.
 
 
 ## Measurement sessions and questionnaire results
@@ -268,6 +356,6 @@ The SDK creates a measurement session before instructions and capture. Its UUID 
 
 All four questionnaire answers are required and saved before completing the questionnaire. Failed submissions can be retried; cancelling an unsaved questionnaire reports `questionnaireUploadCancelled` (error code 1009).
 
-After successful submission, the answers and `isOlderThan43` determine the final assessment using VisionCheck’s four-question rules. A normal assessment produces `conclusion == .normal`; myopia, hyperopia, astigmatism, or presbyopia produces `.finding`. `questionnaire` identifies the assessment, while `leftEye` and `rightEye` retain the original camera probabilities and ranges. The SDK result screen displays the final assessment. Without completed questions, the camera-based conclusion remains.
+After successful submission, the answers and `isOlderThan43` determine the final assessment using VisionCheck’s four-question rules. The assessment is applied to both `left` and `right` and appears in aggregated `results`. `questionnaire` records that evaluation, while `leftEye` and `rightEye` retain the original camera probabilities and ranges. The SDK result screen displays the final assessment. Without completed questions, the camera-based per-eye assessments are used.
 
 Verify the complete measurement and questionnaire flow on a supported physical iPhone; simulator tests cover app launch and public result/error contracts.
