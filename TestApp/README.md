@@ -4,7 +4,7 @@ For React Native host applications, see the [React Native integration guide](REA
 
 Open `TestApp.xcodeproj`, select your signing team if needed, and run on an iPhone with iOS 16.6 or later. Select **Swift** or **Objective-C**, then tap **Start full vision check** to open the complete SDK flow: instructions, camera and validation, results, and optional questionnaire. The example uses `isOlderThan43: true`.
 
-The app uses `com.optikosprime.SDKUIKitExample` and the supplied production `SDKLicenseKey` in `TestApp/Info.plist`. Installing it replaces the internal example if that app is already installed with the same identifier.
+The app uses `com.optikosprime.SDKUIKitExample`. In `TestApp/Info.plist`, `SDKEnvironment` defaults to `development` for both Debug and Release builds. Change it to `production` to use production; rebuild and relaunch the app. Swift and Objective-C both select the matching `SDKDevelopmentLicenseKey` or `SDKProductionLicenseKey`. The supplied licenses are issued for this sample's bundle identifier; use matching licenses if you change it. Invalid settings or a missing license are reported in the app.
 
 The Xcode project references the binary OptikosPrimeSDK package, which downloads its versioned XCFramework and verifies its checksum. It does not use a local SDK source project.
 
@@ -22,6 +22,6 @@ The **Objective-C** selection calls `TestApp/ObjCSDKExample.m` to initialize and
 
 Successfully saved questionnaire answers and the configured age group determine the final assessment using VisionCheck’s four-question rules. The evaluated assessment is applied to both eyes and the aggregate, even when the camera was inconclusive. Read `left`, `right`, and `results` for the specific assessments, rather than the deprecated coarse `conclusion`. The original camera probabilities remain available in `leftEye` and `rightEye`. Without completed questions, each eye is classified from its camera probabilities.
 
-Both API environments use normal TLS validation; the test app has no ATS exception. This public example continues to use production and its supplied production license.
+Both API environments use normal TLS validation; the test app has no ATS exception.
 
 On an iPhone, start the full flow: complete a measurement, answer all four questions, wait for successful submission, and check that the SDK screen shows the returned per-eye and aggregated assessments. Also verify cancelling, skipping questions, and retrying a failed questionnaire submission. Full camera measurements cannot be validated in the simulator.

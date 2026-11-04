@@ -25,15 +25,18 @@ static NSString *QuestionnaireName(OptikosPrimeQuestionResult assessment) {
 
 + (void)startFromViewController:(UIViewController *)presenter
                     licenseKey:(NSString *)licenseKey
+     useDevelopmentEnvironment:(BOOL)useDevelopmentEnvironment
                     completion:(void (^)(NSString *))completion {
     NSAssert([NSThread isMainThread], @"Present the SDK on the main thread.");
     if (presenter.presentedViewController != nil) {
         return;
     }
 
+    OptikosPrimeEnvironment environment = useDevelopmentEnvironment
+        ? OptikosPrimeEnvironmentDevelopment : OptikosPrimeEnvironmentProduction;
     NSError *error = nil;
     if (![OptikosPrimeSDK isInitialized] && ![OptikosPrimeSDK initializeWithLicenseKey:licenseKey
-                                      environment:OptikosPrimeEnvironmentProduction
+                                      environment:environment
                                             error:&error]) {
         completion(error.localizedDescription ?: @"SDK initialization failed.");
         return;
@@ -78,10 +81,14 @@ static NSString *QuestionnaireName(OptikosPrimeQuestionResult assessment) {
     [presenter presentViewController:controller animated:YES completion:nil];
 }
 
-+ (void)checkCameraSupportWithLicenseKey:(NSString *)licenseKey completion:(void (^)(NSString *))completion {
++ (void)checkCameraSupportWithLicenseKey:(NSString *)licenseKey
+             useDevelopmentEnvironment:(BOOL)useDevelopmentEnvironment
+                            completion:(void (^)(NSString *))completion {
+    OptikosPrimeEnvironment environment = useDevelopmentEnvironment
+        ? OptikosPrimeEnvironmentDevelopment : OptikosPrimeEnvironmentProduction;
     NSError *error = nil;
     if (![OptikosPrimeSDK isInitialized] &&
-        ![OptikosPrimeSDK initializeWithLicenseKey:licenseKey environment:OptikosPrimeEnvironmentProduction error:&error]) {
+        ![OptikosPrimeSDK initializeWithLicenseKey:licenseKey environment:environment error:&error]) {
         completion(error.localizedDescription);
         return;
     }

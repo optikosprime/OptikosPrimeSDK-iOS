@@ -1,11 +1,12 @@
 import Foundation
 import OptikosPrimeSDK
 import Testing
+@testable import TestApp
 
 struct TestAppTests {
     @Test @MainActor func publishedSDKInitializesAndEvaluatesAllQuestionnaireAnswers() throws {
-        let license = try #require(Bundle.main.object(forInfoDictionaryKey: "SDKLicenseKey") as? String)
-        try OptikosPrimeSDK.initialize(licenseKey: license, environment: .production)
+        let configuration = try SampleSDKConfiguration.load()
+        try OptikosPrimeSDK.initialize(licenseKey: configuration.licenseKey, environment: configuration.environment)
         #expect(OptikosPrimeSDK.isInitialized)
 
         // VisionCheck's expected assessments: no symptoms young/older, symptoms young/older.
@@ -26,6 +27,38 @@ struct TestAppTests {
                         #expect(try OptikosPrimeQuestionEvaluator.evaluate(answers) == expected[index])
                     }
                 }
+            }
+        }
+    }
+
+    @Test @MainActor func bundledLicensesInitializeTheirMatchingEnvironments() throws {
+        defer { OptikosPrimeSDK.reset() }
+        for (name, environment, licenseSetting) in [
+            ("development", OptikosPrimeEnvironment.development, "SDKDevelopmentLicenseKey"),
+            ("production", OptikosPrimeEnvironment.production, "SDKProductionLicenseKey")
+        ] {
+            var settings = Bundle.main.infoDictionary ?? [:]
+            settings["SDKEnvironment"] = name
+            let configuration = try SampleSDKConfiguration.load(from: settings)
+            let matchesBundledLicense = configuration.licenseKey == settings[licenseSetting] as? String
+            #expect(configuration.environment == environment)
+            #expect(matchesBundledLicense)
+            try OptikosPrimeSDK.initialize(licenseKey: configuration.licenseKey, environment: configuration.environment)
+            #expect(OptikosPrimeSDK.isInitialized)
+        }
+    }
+
+    @Test @MainActor func invalidEnvironmentOrMissingLicenseDoesNotFallBack() {
+        let invalidSettings: [[String: Any]] = [
+            ["SDKProductionLicenseKey": "production-license"],
+            ["SDKEnvironment": "invalid", "SDKProductionLicenseKey": "production-license"],
+            ["SDKEnvironment": "development", "SDKProductionLicenseKey": "production-license"],
+            ["SDKEnvironment": "production", "SDKDevelopmentLicenseKey": "development-license"],
+            ["SDKEnvironment": "development", "SDKDevelopmentLicenseKey": " \n"]
+        ]
+        for settings in invalidSettings {
+            #expect(throws: (any Error).self) {
+                try SampleSDKConfiguration.load(from: settings)
             }
         }
     }

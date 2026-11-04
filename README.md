@@ -32,7 +32,20 @@ The SDK requests camera access when opening its camera. It uses video capture wi
 
 The camera also uses live `CMMotionManager` accelerometer and device-motion updates for orientation guidance. Whether these specific APIs require `NSMotionUsageDescription` remains unconfirmed in this integration; the existing VisionCheck app does not declare it. A fresh-install device check should include motion guidance as well as camera access and denial.
 
-Production uses the HTTPS service at `cloud.optikosprime.com`. The public TestApp uses production and has no ATS exceptions. Development uses `https://dev.cloud.optikosprime.com/` and requires a development license. Both environments use normal TLS certificate and hostname validation.
+Production uses the HTTPS service at `cloud.optikosprime.com`. The public TestApp defaults to development; select its environment in `TestApp/TestApp/Info.plist`. It has no ATS exceptions. Development uses `https://dev.cloud.optikosprime.com/` and requires a development license. Both environments use normal TLS certificate and hostname validation.
+
+## Localization
+
+Built-in SDK screens support English, Danish, Italian, Dutch, and Swedish, matching VisionCheck. English is the default fallback. Assessment `title` and `subtitle` are localized; assessment types and JSON values remain stable across languages.
+
+The SDK follows the app’s effective language. If your host app does not declare those languages, allow the SDK and its camera bundle to use their own translations by adding this to the host’s `Info.plist` (already enabled in TestApp):
+
+```xml
+<key>CFBundleAllowMixedLocalizations</key>
+<true/>
+```
+
+Localize the host’s camera permission description separately. Custom strings supplied through `OptikosPrimeText` are displayed unchanged and should be translated by the host. Integration diagnostics and server error details retain their original text.
 
 ## Main entry point
 

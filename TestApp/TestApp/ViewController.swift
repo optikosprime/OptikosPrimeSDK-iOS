@@ -41,14 +41,11 @@ final class ViewController: UIViewController {
     }
 
     @objc private func checkCameraSupport() {
-        guard let licenseKey = Bundle.main.object(forInfoDictionaryKey: "SDKLicenseKey") as? String,
-              !licenseKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            outputLabel.text = "Set SDKLicenseKey in Info.plist to the production license for com.optikosprime.SDKUIKitExample."
-            return
-        }
+        guard let sdkConfiguration = loadSDKConfiguration() else { return }
         outputLabel.text = "Checking camera support…"
         if languageSelector.selectedSegmentIndex == 1 {
-            ObjCSDKExample.checkCameraSupport(licenseKey: licenseKey) { [weak self] status in
+            ObjCSDKExample.checkCameraSupport(licenseKey: sdkConfiguration.licenseKey,
+                                             useDevelopmentEnvironment: sdkConfiguration.environment == .development) { [weak self] status in
                 self?.outputLabel.text = status
             }
             return
@@ -56,7 +53,8 @@ final class ViewController: UIViewController {
         Task { @MainActor in
             do {
                 if !OptikosPrimeSDK.isInitialized {
-                    try OptikosPrimeSDK.initialize(licenseKey: licenseKey, environment: .production)
+                    try OptikosPrimeSDK.initialize(licenseKey: sdkConfiguration.licenseKey,
+                                                   environment: sdkConfiguration.environment)
                 }
                 let info = try await OptikosPrimeSDK.getCameraInfo()
                 outputLabel.text = info.supported ? "Camera is supported." : "This device is not supported."
@@ -68,14 +66,11 @@ final class ViewController: UIViewController {
 
     @objc private func startFullFlow() {
         guard presentedViewController == nil else { return }
-        guard let licenseKey = Bundle.main.object(forInfoDictionaryKey: "SDKLicenseKey") as? String,
-              !licenseKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            outputLabel.text = "Set SDKLicenseKey in Info.plist to the production license for com.optikosprime.SDKUIKitExample."
-            return
-        }
+        guard let sdkConfiguration = loadSDKConfiguration() else { return }
 
         if languageSelector.selectedSegmentIndex == 1 {
-            ObjCSDKExample.start(from: self, licenseKey: licenseKey) { [weak self] status in
+            ObjCSDKExample.start(from: self, licenseKey: sdkConfiguration.licenseKey,
+                                 useDevelopmentEnvironment: sdkConfiguration.environment == .development) { [weak self] status in
                 self?.outputLabel.text = status
             }
             return
@@ -83,7 +78,8 @@ final class ViewController: UIViewController {
 
         do {
             if !OptikosPrimeSDK.isInitialized {
-                try OptikosPrimeSDK.initialize(licenseKey: licenseKey, environment: .production)
+                try OptikosPrimeSDK.initialize(licenseKey: sdkConfiguration.licenseKey,
+                                               environment: sdkConfiguration.environment)
             }
             // Matches the internal example's complete customized flow, including the questionnaire.
             let configuration = OptikosPrimeConfiguration(style: ExampleTheme.customizedStyle, isOlderThan43: true)
@@ -116,6 +112,15 @@ final class ViewController: UIViewController {
             present(controller, animated: true)
         } catch {
             outputLabel.text = error.localizedDescription
+        }
+    }
+
+    private func loadSDKConfiguration() -> SampleSDKConfiguration? {
+        do {
+            return try SampleSDKConfiguration.load()
+        } catch {
+            outputLabel.text = error.localizedDescription
+            return nil
         }
     }
 }
