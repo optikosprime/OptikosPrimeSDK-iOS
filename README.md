@@ -215,7 +215,7 @@ Each original eye measurement exposes `myopia`, `hyperopia`, `astigmatism`, `inc
 
 ### Per-eye and aggregated assessments
 
-Without completed questions, each eye is classified using VisionCheck’s camera classifier: myopia or hyperopia above 0.25 takes priority; otherwise, the highest probability determines its assessment. After successful questionnaire submission, the four answers and `isOlderThan43` determine one assessment applied to both eyes.
+Without completed questions, each eye is classified using VisionCheck’s camera classifier: the highest probability across hyperopia, inconclusive, myopia, normal, and astigmatism determines its assessment. Ties use that order, so an all-zero result selects hyperopia. After successful questionnaire submission, the four answers and `isOlderThan43` determine one assessment applied to both eyes.
 
 `results` is the deduplicated union of `left` and `right`. If another assessment exists, inconclusive is removed. If a specific assessment remains, normal is removed. Per-eye arrays keep their own assessments. Aggregate ordering is stable: myopia, hyperopia, astigmatism, normal, presbyopia, inconclusive.
 

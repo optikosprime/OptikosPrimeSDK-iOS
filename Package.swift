@@ -23,7 +23,7 @@ let package = Package(
         ),
         .binaryTarget(
             name: "OptikosPrimeSDK",
-            url: "https://github.com/optikosprime/OptikosPrimeSDK-iOS/releases/download/0.0.6/OptikosPrimeSDK.xcframework.zip",
-            checksum: "a9f72b0f422b21d76b3a8071456a10cce21f7349a4f5535236b799717b24b6e4")
+            url: "https://github.com/optikosprime/OptikosPrimeSDK-iOS/releases/download/0.0.7/OptikosPrimeSDK.xcframework.zip",
+            checksum: "713dbf8021294c3ce532bfa27b1af250c894b2625bc02adc38a2508beb6894e2")
     ]
 )
