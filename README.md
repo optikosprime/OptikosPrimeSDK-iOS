@@ -131,7 +131,7 @@ do {
 }
 ```
 
-For custom styling and flow options, use `visionCheckViewController(configuration:completion:)` with `OptikosPrimeConfiguration`. `OptikosPrimeStyle` controls colors, fonts, and layout; `OptikosPrimeText` controls configurable text. These Swift configuration structs are not exposed to Objective-C.
+For custom styling and flow options, use `visionCheckViewController(configuration:completion:)` with `OptikosPrimeConfiguration`. `OptikosPrimeStyle` controls colors, fonts, and layout; `OptikosPrimeText` controls configurable text. See [Themes and custom fonts](#themes-and-custom-fonts) for predefined styles and font overrides. These Swift configuration structs are not exposed to Objective-C.
 
 ## Objective-C
 
@@ -183,6 +183,95 @@ let view = try OptikosPrimeVisionCheck(
     // Clear the host's presentation state to dismiss the flow.
 }
 ```
+
+## Themes and custom fonts
+
+Choose a predefined `OptikosPrimeStyle`, then customize a local copy if needed. Pass the resulting style through `OptikosPrimeConfiguration` before constructing the SDK flow. This works with both SwiftUI and the Swift UIKit bridge; the Objective-C entry point uses the default style.
+
+### Predefined themes
+
+| Style | Appearance | Colors and typography |
+| --- | --- | --- |
+| `.default` | Follows the host's light/dark appearance | White pages and burgundy primary buttons in light mode; dark surfaces and muted red primary buttons in dark mode. Uses system typography. |
+| `.red` | Fixed light appearance, including in a dark host | White pages, dark rounded text, red primary buttons with white labels, and pale pink secondary buttons with red labels. |
+
+The red theme is opt-in. `OptikosPrimeStyle.default` and the default configuration remain unchanged.
+
+The red palette uses these sRGB colors:
+
+| Color role | Value |
+| --- | --- |
+| Page and card background | `#FFFFFF` |
+| Primary and secondary text | `#1A1A1A` |
+| Primary button background | `#BF2B34` |
+| Primary button text | `#FFFFFF` |
+| Secondary button and assessment tile background | `#FAEEEF` |
+| Secondary button text | `#BF2B34` |
+
+At the standard Dynamic Type size, `.red` uses 24-point bold titles, 18-point body text, and 20-point semibold button labels in the rounded system font. It supplies 32-point page padding, 12-point corners, and a 56-point minimum button height. Buttons can grow to fit larger or multiline text. The theme applies to the SDK's existing screens and artwork.
+
+```swift
+import OptikosPrimeSDK
+
+let configuration = OptikosPrimeConfiguration(
+    style: .red,
+    isOlderThan43: isOlderThan43 // Use the age-group answer collected by your app.
+)
+```
+
+After initialization, use this configuration with `OptikosPrimeVisionCheck(configuration:onCompletion:)` or `OptikosPrimeSDKBridge.visionCheckViewController(configuration:completion:)`. For standalone screens, pass the style to their `style:` parameter.
+
+### Register a custom font in the host app
+
+Add your `.ttf` or `.otf` files to the app target and ensure they appear in **Copy Bundle Resources**. Register each file in the **host app's** `Info.plist` under `UIAppFonts` (Fonts provided by application). These example filenames are placeholders; replace them with your own files:
+
+```xml
+<key>UIAppFonts</key>
+<array>
+    <string>BrandSans-Regular.ttf</string>
+    <string>BrandSans-Semibold.ttf</string>
+    <string>BrandSans-Bold.ttf</string>
+</array>
+```
+
+The SDK does not bundle or register your custom font. See Apple's [custom font setup guide](https://developer.apple.com/documentation/uikit/adding-a-custom-font-to-your-app) for host-app registration details.
+
+### Apply custom fonts to a predefined theme
+
+Copy `.red` or `.default` and set the `familyName` on the typography roles you want to replace. Despite the property name, supply the registered font face's PostScript name, such as `BrandSans-Bold`, rather than its filename or a generic family name. Replace the placeholder names below with those from your font files:
+
+```swift
+import OptikosPrimeSDK
+
+var style = OptikosPrimeStyle.red // Or OptikosPrimeStyle.default.
+style.typography.display.familyName = "BrandSans-Regular"
+style.typography.title.familyName = "BrandSans-Bold"
+style.typography.body.familyName = "BrandSans-Regular"
+style.typography.button.familyName = "BrandSans-Semibold"
+style.typography.caption.familyName = "BrandSans-Regular"
+
+let configuration = OptikosPrimeConfiguration(
+    style: style,
+    isOlderThan43: isOlderThan43
+)
+```
+
+Setting only `familyName` preserves the chosen theme's colors, layout, font sizes, and Dynamic Type text styles. Set just one role to replace only that font. The predefined theme itself is a value and is not modified when you edit this copy.
+
+For a custom font, select the regular, semibold, or bold face explicitly through `familyName`. The SDK's font renderer uses `weight` and `design` for system fonts; setting `familyName` selects the custom face instead of the red theme's rounded system design. Leave `familyName` as `nil` to use the theme's system font.
+
+Custom fonts still scale with Dynamic Type using each role's `size` and `textStyle`. To adjust a base size while retaining its scaling behavior, change that role's `size`, for example `style.typography.body.size = 19`.
+
+If the font does not appear, verify target membership, the exact `UIAppFonts` filenames, and the registered face name. Inspect the font's PostScript name in Font Book, or query the fonts available at runtime:
+
+```swift
+import UIKit
+
+print(UIFont.fontNames(forFamilyName: "Brand Sans")) // Use your font's actual family name.
+assert(UIFont(name: "BrandSans-Regular", size: 18) != nil)
+```
+
+Camera guidance and Help use their built-in fonts and colors; SDK font overrides do not replace them. Camera's rectangular guidance buttons do use the configured button radius. The bundled “Powered by OptikosPrime” artwork also keeps its own lettering.
 
 ## Outcomes and errors
 

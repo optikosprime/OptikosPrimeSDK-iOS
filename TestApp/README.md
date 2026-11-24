@@ -18,6 +18,8 @@ The sample calls the SDK directly, without network interception, synthetic respo
 
 The **Objective-C** selection calls `TestApp/ObjCSDKExample.m` to initialize and present the full flow using the generated SDK header. The **Swift** selection uses the customized example style; Objective-C uses the default SDK style. The SDK class is named `OptikosPrimeSDK` in Objective-C (`OptikosPrimeSDKBridge` in Swift); custom Swift configuration and style structs are not exposed to Objective-C.
 
+For the built-in `.red` theme and instructions for applying your own font to `.red` or `.default`, see [Themes and custom fonts](../README.md#themes-and-custom-fonts). The sample's custom palette is defined in `TestApp/ExampleTheme.swift`; its Swift flow passes that style through `OptikosPrimeConfiguration` in `TestApp/ViewController.swift`.
+
 ## Questionnaire results
 
 Successfully saved questionnaire answers and the configured age group determine the final assessment using VisionCheck’s four-question rules. The evaluated assessment is applied to both eyes and the aggregate, even when the camera was inconclusive. Read `left`, `right`, and `results` for the specific assessments, rather than the deprecated coarse `conclusion`. The original camera probabilities remain available in `leftEye` and `rightEye`. Without completed questions, each eye is classified from its camera probabilities.
